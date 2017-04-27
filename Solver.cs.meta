@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f876221cdfbb45b45994ae5a765f62d7
+timeCreated: 1454948021
+licenseType: Pro
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - solverMat: {fileID: 2100000, guid: f44dc9d73b49e0f419acbf73daf233e1, type: 2}
+  - forceTex: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: c93b7cedf0efb0841b98165e2773c70e
+timeCreated: 1455014693
+licenseType: Pro
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - solver: {fileID: 4800000, guid: d2cb7448da6a062489f1fa7af808fc92, type: 3}
+  - advectMat: {fileID: 2100000, guid: d5b088054081b5242b662262ee929b5c, type: 2}
+  - lerpMat: {fileID: 2100000, guid: a9122da23ef9c3a4d89860aea8726720, type: 2}
+  - forceFieldMat: {fileID: 2100000, guid: 6825da0cea7fe8c499c346d233555ed5, type: 2}
+  - fluidEffectMat: {fileID: 2100000, guid: b41c9d98c5465134b87ac5955748d381, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
