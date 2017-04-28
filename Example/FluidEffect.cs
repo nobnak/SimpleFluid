@@ -40,9 +40,9 @@ namespace SimpleFluid {
             _attachedCamera.depthTextureMode = DepthTextureMode.Depth;
 			
             manualCam = new ManuallyRenderCamera (_attachedCamera);
-            _imageTex0 = new LODRenderTexture (_attachedCamera, 0, 0, RenderTextureFormat.ARGBFloat);
-            _imageTex1 = new LODRenderTexture (_attachedCamera, 0, 0, RenderTextureFormat.ARGBFloat);
-            _sourceTex = new LODRenderTexture (_attachedCamera, 0, 24, RenderTextureFormat.ARGB32);
+            _imageTex0 = new LODRenderTexture (_attachedCamera, 0, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            _imageTex1 = new LODRenderTexture (_attachedCamera, 0, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            _sourceTex = new LODRenderTexture (_attachedCamera, 0, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
 
             _imageTex0.AfterCreateTexture += UpdateAfterCreateTexture;
             _imageTex1.AfterCreateTexture += UpdateAfterCreateTexture;

@@ -44,7 +44,7 @@
 			
 			float4 frag (v2f i) : SV_Target {
 				float4 cimg = tex2D(_MainTex, i.uv.xy);
-				float4 cprev = tex2D(_PrevTex, i.uv.zw);
+				float4 cprev = tex2D(_PrevTex, i.uv.zw) - _Dissipation;
                 return lerp(cprev, float4(cimg.xyz, 1), cimg.a * _Restoration);
 			}
 			ENDCG
