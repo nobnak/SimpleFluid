@@ -12,7 +12,4 @@ namespace SimpleFluid {
                 mat.SetTexture (propertyName, tex);
         }
     }
-
-    [System.Serializable]
-    public class TextureEvent : UnityEngine.Events.UnityEvent<Texture> {}
 }
