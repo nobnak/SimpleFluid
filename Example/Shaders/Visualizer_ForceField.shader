@@ -1,4 +1,4 @@
-﻿Shader "Unlit/ForceField" {
+﻿Shader "Visualizer/ForceField" {
 	Properties 	{
 		_MainTex ("Texture", 2D) = "white" {}
         _Scale ("Scale", Float) = 1

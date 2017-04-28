@@ -11,19 +11,22 @@ namespace SimpleFluid {
 
         public const string PROP_FLUID_TEX = "_FluidTex";
         public const string PROP_IMAGE_TEX = "_ImageTex";
-		public const string PROP_REF_TEX = "_RefTex";
+		public const string PROP_PREV_TEX = "_PrevTex";
         public const string PROP_DT = "_Dt";
 
 		public TextureEvent OnUpdateAdvectedImageTexture;
 
 		public RenderMode renderMode;
 		public Solver solver;
+        public int lod = 1;
 
         public Material advectMat;
         public Material lerpMat;
         public Material fluidEffectMat;
 
-        public int lod = 1;
+        [Header("Visualizer")]
+        public ColorMatrix colorMatrix;
+        public Material colorVisualizerMat;
 
         Camera _attachedCamera;
     	LODRenderTexture _imageTex0;
@@ -62,18 +65,19 @@ namespace SimpleFluid {
 			InjectSourceColorToImage ();
         }
 		void OnRenderImage(RenderTexture src, RenderTexture dst) {
+            colorMatrix.SetMatrix (colorVisualizerMat);
 			switch (renderMode) {
 			case RenderMode.Fluid:
-				Graphics.Blit (solver.FluidTex, dst);
+                Graphics.Blit (solver.FluidTex, dst, colorVisualizerMat);
 				break;
 			case RenderMode.Force:
-				Graphics.Blit (solver.ForceTex, dst);
+                Graphics.Blit (solver.ForceTex, dst, colorVisualizerMat);
 				break;
 			case RenderMode.AdvectionSource:
-                Graphics.Blit (_sourceTex.Texture, dst);
+                Graphics.Blit (_sourceTex.Texture, dst, colorVisualizerMat);
 				break;
 			case RenderMode.AdvectedImage:
-                Graphics.Blit (_imageTex0.Texture, dst);
+                Graphics.Blit (_imageTex0.Texture, dst, colorVisualizerMat);
 				break;
 			default:
                 #if false
@@ -125,7 +129,7 @@ namespace SimpleFluid {
 		}
 
 		void InjectSourceColorToImage () {
-            lerpMat.SetTexture (PROP_REF_TEX, _imageTex0.Texture);
+            lerpMat.SetTexture (PROP_PREV_TEX, _imageTex0.Texture);
             Graphics.Blit (_sourceTex.Texture, _imageTex1.Texture, lerpMat);
             OnUpdateAdvectedImageTexture.Invoke (_imageTex1.Texture);
 			Solver.Swap (ref _imageTex0, ref _imageTex1);
