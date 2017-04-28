@@ -7,7 +7,6 @@
 	}
 	SubShader {
 		Cull Off ZWrite Off ZTest Always
-        //ColorMask RGB
 
 		Pass {
 			CGPROGRAM
@@ -46,8 +45,7 @@
 			float4 frag (v2f i) : SV_Target {
 				float4 cimg = tex2D(_MainTex, i.uv.xy);
 				float4 cprev = tex2D(_PrevTex, i.uv.zw);
-                //return lerp(cprev, cimg, cimg.a * _Restoration) - _Dissipation;
-                return lerp(cprev - _Dissipation, cimg, cimg.a * _Restoration);
+                return lerp(cprev, float4(cimg.xyz, 1), cimg.a * _Restoration);
 			}
 			ENDCG
 		}

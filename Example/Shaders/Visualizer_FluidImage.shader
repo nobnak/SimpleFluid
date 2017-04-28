@@ -6,8 +6,8 @@
 	SubShader {
 		Tags { "RenderType"="Transparent" "Queue"="Transparent" "IgnoreProjector"="True" }
         Cull Off ZTest LEqual ZWrite Off
-        Blend One OneMinusSrcAlpha
-        //Blend SrcAlpha OneMinusSrcAlpha
+        //Blend One OneMinusSrcAlpha
+        Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass {
 			CGPROGRAM
