@@ -1,6 +1,7 @@
 # Simple Fluid Effect for Unity
 
 [![Thumbnail](http://img.youtube.com/vi/EYmZhtEaxP8/0.jpg)](https://youtu.be/EYmZhtEaxP8)
+[![Thumbnail](http://img.youtube.com/vi/_zKKKZSu3QU/0.jpg)](https://youtu.be/_zKKKZSu3QU)
 
 Fluid-like effect for Unity based on 2D Fluid simulation [Ref 1]. 
 
