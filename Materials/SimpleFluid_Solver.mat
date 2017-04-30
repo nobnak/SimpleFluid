@@ -6,7 +6,7 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: Solver
+  m_Name: SimpleFluid_Solver
   m_Shader: {fileID: 4800000, guid: d2cb7448da6a062489f1fa7af808fc92, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5

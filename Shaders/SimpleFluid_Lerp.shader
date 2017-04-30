@@ -1,13 +1,12 @@
-﻿Shader "SimpleFluid/FluidEffect" {
+﻿Shader "SimpleFluid/Lerp" {
 	Properties {
 		_MainTex ("Texture", 2D) = "white" {}
-        _ImageTex ("Image", 2D) = "black" {}
-        _Power ("Power", Float) = 1
-        _Shift ("Color Shift", Vector) = (0,0,0,0)
+		_PrevTex ("Reference", 2D) = "white" {}
+        _Restoration ("Restoration", Range(0, 1)) = 0.1
+        _Dissipation ("Dissipation", Range(0, 1)) = 0.01
 	}
 	SubShader {
 		Cull Off ZWrite Off ZTest Always
-        ColorMask RGB
 
 		Pass {
 			CGPROGRAM
@@ -15,15 +14,12 @@
 			#pragma fragment frag
 			
 			#include "UnityCG.cginc"
-            #include "Assets/Packages/ColorCorrection/ColorSpace.cginc"
 
             sampler2D _MainTex;
             float4 _MainTex_TexelSize;
-            sampler2D _ImageTex;
-            float _Power;
-            float4 _Shift;
-
-            sampler2D _CameraDepthTexture;
+            sampler2D _PrevTex;
+            float _Restoration;
+            float _Dissipation;
 
 			struct appdata {
 				float4 vertex : POSITION;
@@ -47,13 +43,10 @@
 			}
 			
 			float4 frag (v2f i) : SV_Target {
-				float4 csrc = tex2D(_MainTex, i.uv.xy);
-                float4 cfluid = tex2D(_ImageTex, i.uv.zw);
-                float z = tex2D(_CameraDepthTexture, i.uv.zw);
-                float d = Linear01Depth(z);
+				float4 cimg = tex2D(_MainTex, i.uv.xy);
+				float4 cprev = tex2D(_PrevTex, i.uv.zw) - _Dissipation;
 
-                cfluid.xyz = HSVShift(cfluid.xyz * _Power, _Shift); 
-                return lerp(csrc, cfluid, d);
+                return lerp(cprev, cimg, cimg.a * _Restoration);
 			}
 			ENDCG
 		}

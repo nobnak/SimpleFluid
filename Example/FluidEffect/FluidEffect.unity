@@ -322,7 +322,7 @@ Transform:
   m_GameObject: {fileID: 1249029194}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -1}
-  m_LocalScale: {x: 20, y: 10, z: 1}
+  m_LocalScale: {x: 14.775929, y: 10, z: 1}
   m_Children: []
   m_Father: {fileID: 711871905}
   m_RootOrder: 1
@@ -455,9 +455,10 @@ MonoBehaviour:
   lod: 1
   advectMat: {fileID: 2100000, guid: d5b088054081b5242b662262ee929b5c, type: 2}
   lerpMat: {fileID: 2100000, guid: a9122da23ef9c3a4d89860aea8726720, type: 2}
-  fluidEffectMat: {fileID: 2100000, guid: b41c9d98c5465134b87ac5955748d381, type: 2}
   colorMatrix:
-    mode: 0
+    filmMode: 0
+    blendMode: 0
+    backgroundColor: {r: 1, g: 1, b: 1, a: 0}
   colorVisualizerMat: {fileID: 2100000, guid: e823d587331ddf44f90fd3335f847e31, type: 2}
 --- !u!81 &1266903502
 AudioListener:
@@ -489,7 +490,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 1, g: 1, b: 1, a: 0}
+  m_BackGroundColor: {r: 0.691, g: 0.691, b: 0.691, a: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0

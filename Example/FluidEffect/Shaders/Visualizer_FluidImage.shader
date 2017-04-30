@@ -1,4 +1,4 @@
-﻿Shader "Visualizer/Fluid Image" {
+﻿Shader "SimpleFluid/Visualizer/Fluid Image" {
 	Properties {
 		_MainTex ("Texture", 2D) = "black" {}
         _Fluidity ("Fluidity", Range(0,1)) = 0
@@ -16,7 +16,7 @@
             #pragma multi_compile FLUIDABLE_OUTPUT_COLOR FLUIDABLE_OUTPUT_SOURCE
 			
 			#include "UnityCG.cginc"
-            #include "Fluidable.cginc"
+            #include "Assets/Packages/SimpleFluid/Shaders/SimpleFluid_Fluidable.cginc"
 
 			struct appdata {
 				float4 vertex : POSITION;

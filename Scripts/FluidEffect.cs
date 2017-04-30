@@ -22,7 +22,6 @@ namespace SimpleFluid {
 
         public Material advectMat;
         public Material lerpMat;
-        public Material fluidEffectMat;
 
         [Header("Visualizer")]
         public ColorMatrix colorMatrix;
@@ -40,9 +39,9 @@ namespace SimpleFluid {
             _attachedCamera.depthTextureMode = DepthTextureMode.Depth;
 			
             manualCam = new ManuallyRenderCamera (_attachedCamera);
-            _imageTex0 = new LODRenderTexture (_attachedCamera, 0, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            _imageTex1 = new LODRenderTexture (_attachedCamera, 0, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            _sourceTex = new LODRenderTexture (_attachedCamera, 0, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            _imageTex0 = new LODRenderTexture (_attachedCamera, lod, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            _imageTex1 = new LODRenderTexture (_attachedCamera, lod, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            _sourceTex = new LODRenderTexture (_attachedCamera, lod, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
 
             _imageTex0.AfterCreateTexture += UpdateAfterCreateTexture;
             _imageTex1.AfterCreateTexture += UpdateAfterCreateTexture;
@@ -65,7 +64,8 @@ namespace SimpleFluid {
 			InjectSourceColorToImage ();
         }
 		void OnRenderImage(RenderTexture src, RenderTexture dst) {
-            colorMatrix.SetMatrix (colorVisualizerMat);
+            colorMatrix.Setup (colorVisualizerMat);
+
 			switch (renderMode) {
 			case RenderMode.Fluid:
                 Graphics.Blit (solver.FluidTex, dst, colorVisualizerMat);
@@ -80,12 +80,7 @@ namespace SimpleFluid {
                 Graphics.Blit (_imageTex0.Texture, dst, colorVisualizerMat);
 				break;
 			default:
-                #if false
-				fluidEffectMat.SetTexture (PROP_IMAGE_TEX, _imageTex0);
-				Graphics.Blit (src, dst, fluidEffectMat);
-                #else
                 Graphics.Blit(src, dst);
-                #endif
 				break;
 			}
 		}

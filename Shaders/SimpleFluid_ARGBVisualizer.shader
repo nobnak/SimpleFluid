@@ -1,6 +1,7 @@
-﻿Shader "Visualizer/ARGBVisualizer" {
+﻿Shader "SimpleFluid/ARGBVisualizer" {
 	Properties {
 		_MainTex ("Texture", 2D) = "white" {}
+        _Color ("Background Color", Color) = (0,0,0,0)
 	}
 	SubShader {
 		Cull Off ZWrite Off ZTest Always
@@ -9,6 +10,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+            #pragma multi_compile One SrcAlpha 
 			
 			#include "UnityCG.cginc"
 
@@ -31,10 +33,16 @@
 			
 			sampler2D _MainTex;
             float4x4 _ColorMatrix;
+            float4 _Color;
 
 			fixed4 frag (v2f i) : SV_Target {
 				fixed4 col = tex2D(_MainTex, i.uv);
-				return mul(_ColorMatrix, col);
+				col = mul(_ColorMatrix, col);
+                #if defined(SrcAlpha)
+                col = col.w * float4(col.xyz, 1);
+                #endif
+                //return col;
+                return lerp(_Color, col, col.w);
 			}
 			ENDCG
 		}

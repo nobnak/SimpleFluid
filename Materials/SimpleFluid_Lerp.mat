@@ -6,7 +6,7 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: Lerp
+  m_Name: SimpleFluid_Lerp
   m_Shader: {fileID: 4800000, guid: b64bf2f5296b11a4fb25c030297b5e51, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
@@ -31,7 +31,9 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Disappoint: 0.479
-    - _Dissipation: 0.0001
+    - _Dissipation: 0.0005
+    - _Fluidity: 0
     - _Rate: 0.01
-    - _Restoration: 0.128
+    - _Restoration: 0.05
+    - _Scale: 1
     m_Colors: []
