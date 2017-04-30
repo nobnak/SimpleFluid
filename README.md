@@ -2,7 +2,12 @@
 
 [![Thumbnail](http://img.youtube.com/vi/EYmZhtEaxP8/0.jpg)](https://youtu.be/EYmZhtEaxP8)
 
-Fluid-like post effect for Unity based on 2D Fluid simulation [Ref 1]. 
+Fluid-like effect for Unity based on 2D Fluid simulation [Ref 1]. 
+
+## Features
+- Support Transparency
+-- Only Support on Linear colorspace yet
+- Can modify Fluidity per object
 
 ## Usage
 Add Gist Submodule into an Unity project (git repository)
