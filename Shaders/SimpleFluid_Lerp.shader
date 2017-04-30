@@ -3,7 +3,7 @@
 		_MainTex ("Texture", 2D) = "white" {}
 		_PrevTex ("Reference", 2D) = "white" {}
         _Restoration ("Restoration", Range(0, 1)) = 0.1
-        _Dissipation ("Dissipation", Range(0, 1)) = 0.01
+        [PowerSlider(2.0)]_Dissipation ("Dissipation", Range(0.0001, 0.01)) = 0.01
 	}
 	SubShader {
 		Cull Off ZWrite Off ZTest Always
