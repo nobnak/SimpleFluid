@@ -8,6 +8,7 @@ Fluid-like effect for Unity based on 2D Fluid simulation [Ref 1].
 - Support Transparency
   - Only Support on Linear colorspace yet
 - Can modify Fluidity per object
+- Use this effect as Texutre
 
 ## Usage
 Add Gist Submodule into an Unity project (git repository)
