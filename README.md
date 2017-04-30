@@ -6,9 +6,13 @@ Fluid-like post effect for Unity based on 2D Fluid simulation [Ref 1].
 
 ## Usage
 Add Gist Submodule into an Unity project (git repository)
-```git submodule add https://github.com/nobnak/Gist.git Assets/Packages/Gist```
+```
+git submodule add https://github.com/nobnak/Gist.git Assets/Packages/Gist
+```
 Also add SimpleFluid Submodule
-```git submodule add https://github.com/nobnak/SimpleFluid.git Assets/Packages/SimpleFluid```
+```
+git submodule add https://github.com/nobnak/SimpleFluid.git Assets/Packages/SimpleFluid
+```
 Open FluidEffect example scene and see how it works
 
 # References
