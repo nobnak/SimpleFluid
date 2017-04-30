@@ -6,7 +6,7 @@ Fluid-like effect for Unity based on 2D Fluid simulation [Ref 1].
 
 ## Features
 - Support Transparency
--- Only Support on Linear colorspace yet
+  - Only Support on Linear colorspace yet
 - Can modify Fluidity per object
 
 ## Usage
