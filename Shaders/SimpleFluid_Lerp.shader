@@ -12,7 +12,6 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-            #pragma multi_compile NO_NEED_GAMMA_CONVERSION NEED_GAMMA_CONVERSION
 			
 			#include "UnityCG.cginc"
             #include "SimpleFluid_Fluidable.cginc"
@@ -47,8 +46,6 @@
 			float4 frag (v2f i) : SV_Target {
 				float4 cimg = tex2D(_MainTex, i.uv.xy);
 				float4 cprev = tex2D(_PrevTex, i.uv.zw);
-
-                cimg = GammaToLinear(cimg);
                 cprev.a -= _Dissipation;
 
                 return lerp(cprev, cimg, cimg.a * _Restoration);
