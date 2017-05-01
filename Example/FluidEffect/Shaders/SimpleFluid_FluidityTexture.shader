@@ -39,7 +39,7 @@
 			
 			fixed4 frag (v2f i) : SV_Target {
 				fixed4 col = tex2D(_MainTex, i.uv);
-                float fluidity = _Fluidity * tex2D(_FluidityTex, i.uv).x;
+                float fluidity = tex2D(_FluidityTex, i.uv).x;
 				return fluidOutMultiplier(col, fluidity);
 			}
 			ENDCG
