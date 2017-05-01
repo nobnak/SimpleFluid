@@ -134,10 +134,15 @@ namespace SimpleFluid {
 		}
 
         static void BroadcastGammaSpace () {
-            if (QualitySettings.activeColorSpace == ColorSpace.Gamma)
+            var color = QualitySettings.activeColorSpace;
+            switch (color) {
+            case ColorSpace.Gamma:
                 Shader.EnableKeyword (KW_GAMMA_CONVERSION);
-            else
+                break;
+            default:
                 Shader.DisableKeyword (KW_GAMMA_CONVERSION);
+                break;
+            }
         }
 
     }
