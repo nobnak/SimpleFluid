@@ -8,6 +8,7 @@ namespace SimpleFluid {
 		public enum RenderMode { Normal = 0, Force, Fluid, AdvectionSource, AdvectedImage }
 
         public const string FLUIDABLE_KW_SOURCE = "FLUIDABLE_OUTPUT_SOURCE";
+        public const string KW_GAMMA_CONVERSION = "NEED_GAMMA_CONVERSION";
 
         public const string PROP_FLUID_TEX = "_FluidTex";
         public const string PROP_IMAGE_TEX = "_ImageTex";
@@ -55,6 +56,8 @@ namespace SimpleFluid {
             obj.Clear (Color.clear);
         }
         void Update() {
+            BroadcastGammaSpace ();
+            
             var dt = solver.DeltaTime;
             Prepare ();
             solver.Solve(dt);
@@ -129,6 +132,13 @@ namespace SimpleFluid {
             OnUpdateAdvectedImageTexture.Invoke (_imageTex1.Texture);
 			Solver.Swap (ref _imageTex0, ref _imageTex1);
 		}
+
+        static void BroadcastGammaSpace () {
+            if (QualitySettings.activeColorSpace == ColorSpace.Gamma)
+                Shader.EnableKeyword (KW_GAMMA_CONVERSION);
+            else
+                Shader.DisableKeyword (KW_GAMMA_CONVERSION);
+        }
 
     }
 }
