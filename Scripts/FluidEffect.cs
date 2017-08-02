@@ -16,6 +16,9 @@ namespace SimpleFluid {
 		public const string PROP_PREV_TEX = "_PrevTex";
         public const string PROP_DT = "_Dt";
 
+        public const string PROP_LERP_EMISSION = "_Emission";
+        public const string PROP_LERP_DISSIPATION = "_Dissipation";
+
 		public TextureEvent OnUpdateAdvectedImageTexture;
 
 		public RenderMode renderMode;
@@ -24,6 +27,10 @@ namespace SimpleFluid {
 
         public Material advectMat;
         public Material lerpMat;
+
+        [Header("Lerp Material")]
+        public float lerpEmission = 0.1f;
+        public float lerpDissipation = 0.1f;
 
         [Header("Visualizer")]
         public ColorMatrix colorMatrix;
@@ -112,7 +119,6 @@ namespace SimpleFluid {
             _imageTex0.UpdateTexture ();
             _imageTex1.UpdateTexture ();
             _sourceTex.UpdateTexture ();
-
         }
 		void UpdateImage (float dt) {
 			solver.SetProperties (advectMat, PROP_FLUID_TEX);
@@ -128,6 +134,8 @@ namespace SimpleFluid {
 		}
 
 		void InjectSourceColorToImage () {
+            lerpMat.SetFloat (PROP_LERP_EMISSION, lerpEmission);
+            lerpMat.SetFloat (PROP_LERP_DISSIPATION, lerpDissipation);
             lerpMat.SetTexture (PROP_PREV_TEX, _imageTex0.Texture);
             Graphics.Blit (_sourceTex.Texture, _imageTex1.Texture, lerpMat);
             OnUpdateAdvectedImageTexture.Invoke (_imageTex1.Texture);
