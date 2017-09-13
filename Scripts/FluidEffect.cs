@@ -9,7 +9,6 @@ namespace SimpleFluid {
 		public enum RenderMode { Normal = 0, Force, Fluid, AdvectionSource, AdvectedImage }
 
         public const string FLUIDABLE_KW_SOURCE = "FLUIDABLE_OUTPUT_SOURCE";
-        public const string KW_GAMMA_CONVERSION = "NEED_GAMMA_CONVERSION";
 
         public const string PROP_FLUID_TEX = "_FluidTex";
         public const string PROP_IMAGE_TEX = "_ImageTex";
@@ -36,6 +35,10 @@ namespace SimpleFluid {
         public ColorMatrix colorMatrix;
         public Material colorVisualizerMat;
 
+        [Header("Texture Format")]
+        public RenderTextureFormat textureFormatAdvected = RenderTextureFormat.ARGBFloat;
+        public RenderTextureFormat textureFormatSource = RenderTextureFormat.ARGB32;
+
         Camera _attachedCamera;
     	LODRenderTexture _imageTex0;
         LODRenderTexture _imageTex1;
@@ -48,9 +51,9 @@ namespace SimpleFluid {
             _attachedCamera.depthTextureMode = DepthTextureMode.Depth;
 			
             manualCam = new ManuallyRenderCamera (_attachedCamera);
-            _imageTex0 = new LODRenderTexture (_attachedCamera, lod, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            _imageTex1 = new LODRenderTexture (_attachedCamera, lod, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            _sourceTex = new LODRenderTexture (_attachedCamera, lod, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+            _imageTex0 = new LODRenderTexture (_attachedCamera, lod, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
+            _imageTex1 = new LODRenderTexture (_attachedCamera, lod, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
+            _sourceTex = new LODRenderTexture (_attachedCamera, lod, 24, textureFormatSource, RenderTextureReadWrite.Linear);
 
             _imageTex0.AfterCreateTexture += UpdateAfterCreateTexture;
             _imageTex1.AfterCreateTexture += UpdateAfterCreateTexture;
@@ -64,8 +67,6 @@ namespace SimpleFluid {
             obj.Clear (Color.clear);
         }
         void Update() {
-            BroadcastGammaSpace ();
-            
             var dt = solver.DeltaTime;
             Prepare ();
             solver.Solve(dt);
@@ -141,18 +142,5 @@ namespace SimpleFluid {
             OnUpdateAdvectedImageTexture.Invoke (_imageTex1.Texture);
 			Solver.Swap (ref _imageTex0, ref _imageTex1);
 		}
-
-        static void BroadcastGammaSpace () {
-            var color = QualitySettings.activeColorSpace;
-            switch (color) {
-            case ColorSpace.Gamma:
-                Shader.EnableKeyword (KW_GAMMA_CONVERSION);
-                break;
-            default:
-                Shader.DisableKeyword (KW_GAMMA_CONVERSION);
-                break;
-            }
-        }
-
     }
 }

@@ -14,7 +14,6 @@
 			#pragma vertex vert
 			#pragma fragment frag
             #pragma multi_compile FLUIDABLE_OUTPUT_COLOR FLUIDABLE_OUTPUT_SOURCE
-            #pragma multi_compile NO_NEED_GAMMA_CONVERSION NEED_GAMMA_CONVERSION
 			
 			#include "UnityCG.cginc"
             #include "Assets/Packages/SimpleFluid/Shaders/SimpleFluid_Fluidable.cginc"
@@ -41,8 +40,15 @@
 			
 			fixed4 frag (v2f i) : SV_Target {
 				fixed4 col = tex2D(_MainTex, i.uv);
+
+                #ifdef UNITY_COLORSPACE_GAMMA
+                col = GammaToLinear(col);
 				col = fluidOutMultiplier(col);
                 col = LinearToGamma(col);
+                #else
+                col = fluidOutMultiplier(col);
+                #endif
+
                 return col;
 			}
 			ENDCG
