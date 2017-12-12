@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
-using Gist;
-using Gist.Events;
+using nobnak.Gist;
+using nobnak.Gist.Events;
 
 namespace SimpleFluid {
 
