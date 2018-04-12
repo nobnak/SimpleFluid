@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 0f8c997d6399e5941bdea22e7daf326a
+timeCreated: 1493542846
+licenseType: Pro
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - solver: {fileID: 4800000, guid: d2cb7448da6a062489f1fa7af808fc92, type: 3}
+  - advectMat: {fileID: 2100000, guid: d5b088054081b5242b662262ee929b5c, type: 2}
+  - lerpMat: {fileID: 2100000, guid: a9122da23ef9c3a4d89860aea8726720, type: 2}
+  - colorVisualizerMat: {fileID: 2100000, guid: e823d587331ddf44f90fd3335f847e31,
+      type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

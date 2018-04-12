@@ -1,12 +1,13 @@
-﻿using UnityEngine;
-using System.Collections;
 using nobnak.Gist;
 using nobnak.Gist.Events;
+using nobnak.Gist.Resizable;
+using UnityEngine;
 
 namespace SimpleFluid {
-    [RequireComponent(typeof(Camera))]
-    public class FluidEffect : MonoBehaviour {
-		public enum RenderMode { Normal = 0, Force, Fluid, AdvectionSource, AdvectedImage }
+	[RequireComponent(typeof(Camera))]
+    public class FluidEffect : BaseFluidEffect {
+		public enum SimulationModeEnum { Fluid = 0, Scraped }
+		public enum OutputModeEnum { Normal = 0, Force, Fluid, AdvectionSource, AdvectedImage }
 
         public const string FLUIDABLE_KW_SOURCE = "FLUIDABLE_OUTPUT_SOURCE";
 
@@ -20,16 +21,16 @@ namespace SimpleFluid {
 
 		public TextureEvent OnUpdateAdvectedImageTexture;
 
-		public RenderMode renderMode;
-		public Solver solver;
+		public SimulationModeEnum simulationMode;
+		public OutputModeEnum outputMode;
         public int lod = 1;
 
-        public Material advectMat;
-        public Material lerpMat;
-
-        [Header("Lerp Material")]
-        public float lerpEmission = 0.1f;
-        public float lerpDissipation = 0.1f;
+		[SerializeField]
+		protected Solver solver;
+		[SerializeField]
+		protected Material advectMat;
+		[SerializeField]
+		protected Material lerpMat;
 
         [Header("Visualizer")]
         public ColorMatrix colorMatrix;
@@ -49,28 +50,31 @@ namespace SimpleFluid {
         void Start() {
             _attachedCamera = GetComponent<Camera> ();
             _attachedCamera.depthTextureMode = DepthTextureMode.Depth;
-			
+
+			System.Func<Vector2Int> fsize = () => 
+				new Vector2Int(_attachedCamera.pixelWidth, _attachedCamera.pixelHeight);
             manualCam = new ManuallyRenderCamera (_attachedCamera);
-            _imageTex0 = new LODRenderTexture (_attachedCamera, lod, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
-            _imageTex1 = new LODRenderTexture (_attachedCamera, lod, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
-            _sourceTex = new LODRenderTexture (_attachedCamera, lod, 24, textureFormatSource, RenderTextureReadWrite.Linear);
+            _imageTex0 = new LODRenderTexture (
+				fsize, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
+            _imageTex1 = new LODRenderTexture (
+				fsize, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
+            _sourceTex = new LODRenderTexture (
+				fsize, 24, textureFormatSource, RenderTextureReadWrite.Linear, 
+				QualitySettings.antiAliasing);
 
             _imageTex0.AfterCreateTexture += UpdateAfterCreateTexture;
             _imageTex1.AfterCreateTexture += UpdateAfterCreateTexture;
 
             Prepare ();
         }
-
-        void UpdateAfterCreateTexture (LODRenderTexture obj) {
-            obj.Texture.wrapMode = TextureWrapMode.Clamp;
-            obj.Texture.filterMode = FilterMode.Bilinear;
-            obj.Clear (Color.clear);
-        }
         void Update() {
             var dt = solver.DeltaTime;
             Prepare ();
-            solver.Solve(dt);
-            UpdateImage (dt);
+
+			if (simulationMode == SimulationModeEnum.Fluid) {
+				solver.Solve(dt);
+				UpdateImage(dt);
+			}
 
 			CaptureAdvectionSource ();
 			InjectSourceColorToImage ();
@@ -78,17 +82,17 @@ namespace SimpleFluid {
 		void OnRenderImage(RenderTexture src, RenderTexture dst) {
             colorMatrix.Setup (colorVisualizerMat);
 
-			switch (renderMode) {
-			case RenderMode.Fluid:
+			switch (outputMode) {
+			case OutputModeEnum.Fluid:
                 Graphics.Blit (solver.FluidTex, dst, colorVisualizerMat);
 				break;
-			case RenderMode.Force:
+			case OutputModeEnum.Force:
                 Graphics.Blit (solver.ForceTex, dst, colorVisualizerMat);
 				break;
-			case RenderMode.AdvectionSource:
+			case OutputModeEnum.AdvectionSource:
                 Graphics.Blit (_sourceTex.Texture, dst, colorVisualizerMat);
 				break;
-			case RenderMode.AdvectedImage:
+			case OutputModeEnum.AdvectedImage:
                 Graphics.Blit (_imageTex0.Texture, dst, colorVisualizerMat);
 				break;
 			default:
@@ -112,35 +116,47 @@ namespace SimpleFluid {
             }
         }
 		#endregion
-
-        void Prepare () {
+		
+		protected void UpdateAfterCreateTexture(LODRenderTexture obj) {
+			obj.Texture.wrapMode = TextureWrapMode.Clamp;
+			obj.Texture.filterMode = FilterMode.Bilinear;
+			obj.Clear(Color.clear);
+		}
+		protected void Prepare () {
             var width = _attachedCamera.pixelWidth;
             var height = _attachedCamera.pixelHeight;
             solver.SetSize (width >> lod, height >> lod);
-            _imageTex0.UpdateTexture ();
-            _imageTex1.UpdateTexture ();
-            _sourceTex.UpdateTexture ();
+			_imageTex0.Lod = lod;
+			_imageTex1.Lod = lod;
+			_sourceTex.Lod = lod;
+            _imageTex0.Update ();
+            _imageTex1.Update ();
+            _sourceTex.Update ();
         }
-		void UpdateImage (float dt) {
-			solver.SetProperties (advectMat, PROP_FLUID_TEX);
-    		advectMat.SetFloat (PROP_DT, dt);
-            Graphics.Blit (_imageTex0.Texture, _imageTex1.Texture, advectMat);
-    		Solver.Swap (ref _imageTex0, ref _imageTex1);
-    	}
+		protected void UpdateImage (float dt) {
+			solver.SetProperties(advectMat, PROP_FLUID_TEX);
+			advectMat.SetFloat(PROP_DT, dt);
+			Graphics.Blit(_imageTex0.Texture, _imageTex1.Texture, advectMat);
+			SwapImageTexture();
+		}
 
-		void CaptureAdvectionSource () {
+		protected void SwapImageTexture() {
+			Solver.Swap(ref _imageTex0, ref _imageTex1);
+		}
+
+		protected void CaptureAdvectionSource () {
 			Shader.EnableKeyword (FLUIDABLE_KW_SOURCE);
             manualCam.Render (_sourceTex.Texture);
 			Shader.DisableKeyword (FLUIDABLE_KW_SOURCE);
 		}
 
-		void InjectSourceColorToImage () {
+		protected void InjectSourceColorToImage () {
             lerpMat.SetFloat (PROP_LERP_EMISSION, lerpEmission);
             lerpMat.SetFloat (PROP_LERP_DISSIPATION, lerpDissipation);
             lerpMat.SetTexture (PROP_PREV_TEX, _imageTex0.Texture);
             Graphics.Blit (_sourceTex.Texture, _imageTex1.Texture, lerpMat);
             OnUpdateAdvectedImageTexture.Invoke (_imageTex1.Texture);
-			Solver.Swap (ref _imageTex0, ref _imageTex1);
+			SwapImageTexture();
 		}
     }
 }
