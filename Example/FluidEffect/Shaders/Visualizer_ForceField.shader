@@ -16,7 +16,7 @@
             #define RAD_NORMALIZE (0.5 / PI)
 			
 			#include "UnityCG.cginc"
-            #include "Assets/Packages/ColorCorrection/ColorSpace.cginc"
+            #include "Assets/Packages/Gist/CGIncludes/ColorSpace.cginc"
 
 			struct appdata 	{
 				float4 vertex : POSITION;

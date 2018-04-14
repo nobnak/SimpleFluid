@@ -42,9 +42,9 @@
 				fixed4 col = tex2D(_MainTex, i.uv);
 
                 #ifdef UNITY_COLORSPACE_GAMMA
-                col = GammaToLinear(col);
+                col.rgb = GammaToLinearSpace(col);
 				col = fluidOutMultiplier(col);
-                col = LinearToGamma(col);
+                col.rgb = LinearToGammaSpace(col);
                 #else
                 col = fluidOutMultiplier(col);
                 #endif
