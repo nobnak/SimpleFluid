@@ -9,5 +9,9 @@ namespace SimpleFluid {
         [Header("Lerp Material")]
         public float lerpEmission = 0.1f;
         public float lerpDissipation = 0.1f;
-    }
+
+		[Header("Quality")]
+		[Range(0, 4)]
+		public int lod = 1;
+	}
 }

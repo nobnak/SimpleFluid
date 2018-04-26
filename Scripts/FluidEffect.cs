@@ -23,7 +23,6 @@ namespace SimpleFluid {
 
 		public SimulationModeEnum simulationMode;
 		public OutputModeEnum outputMode;
-        public int lod = 1;
 
 		[SerializeField]
 		protected Solver solver;
@@ -51,18 +50,25 @@ namespace SimpleFluid {
             _attachedCamera = GetComponent<Camera> ();
             _attachedCamera.depthTextureMode = DepthTextureMode.Depth;
 
-			System.Func<Vector2Int> fsize = () => 
-				new Vector2Int(_attachedCamera.pixelWidth, _attachedCamera.pixelHeight);
             manualCam = new ManuallyRenderCamera (_attachedCamera);
-            _imageTex0 = new LODRenderTexture (
-				fsize, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
-            _imageTex1 = new LODRenderTexture (
-				fsize, 0, textureFormatAdvected, RenderTextureReadWrite.Linear);
-            _sourceTex = new LODRenderTexture (
-				fsize, 24, textureFormatSource, RenderTextureReadWrite.Linear, 
-				QualitySettings.antiAliasing);
+            _imageTex0 = new LODRenderTexture ();
+            _imageTex1 = new LODRenderTexture ();
+            _sourceTex = new LODRenderTexture ();
 
-            _imageTex0.AfterCreateTexture += UpdateAfterCreateTexture;
+			var format0 = _imageTex0.Format;
+			format0.depth = 0;
+			format0.textureFormat = textureFormatAdvected;
+			format0.readWrite = RenderTextureReadWrite.Linear;
+			_imageTex0.Format = format0;
+			_imageTex1.Format = format0;
+
+			var formatSource = _sourceTex.Format;
+			formatSource.depth = 24;
+			formatSource.textureFormat = textureFormatSource;
+			formatSource.readWrite = RenderTextureReadWrite.Linear;
+			formatSource.antiAliasing = QualitySettings.antiAliasing;
+
+			_imageTex0.AfterCreateTexture += UpdateAfterCreateTexture;
             _imageTex1.AfterCreateTexture += UpdateAfterCreateTexture;
 
             Prepare ();
@@ -125,13 +131,14 @@ namespace SimpleFluid {
 		protected void Prepare () {
             var width = _attachedCamera.pixelWidth;
             var height = _attachedCamera.pixelHeight;
+			var size = new Vector2Int(width, height);
             solver.SetSize (width >> lod, height >> lod);
 			_imageTex0.Lod = lod;
 			_imageTex1.Lod = lod;
 			_sourceTex.Lod = lod;
-            _imageTex0.Update ();
-            _imageTex1.Update ();
-            _sourceTex.Update ();
+			_imageTex0.Size = size;
+			_imageTex1.Size = size;
+			_sourceTex.Size = size;
         }
 		protected void UpdateImage (float dt) {
 			solver.SetProperties(advectMat, PROP_FLUID_TEX);
