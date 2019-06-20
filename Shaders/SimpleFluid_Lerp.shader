@@ -43,8 +43,8 @@
 			}
 			
 			float4 frag (v2f i) : SV_Target {
-				float4 cimg = tex2D(_MainTex, i.uv.xy);
-				float4 cprev = tex2D(_PrevTex, i.uv.zw);
+				float4 cimg = tex2Dlod(_MainTex, float4(i.uv.xy, 0, 0));
+				float4 cprev = tex2Dlod(_PrevTex, float4(i.uv.zw, 0, 0));
 
                 cprev = float4(cprev.rgb, (1.0 - _Dissipation * unity_DeltaTime.x) * cprev.a);
                 return lerp(cprev, cimg, cimg.a * _Emission);
