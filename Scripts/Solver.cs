@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace SimpleFluid {
@@ -79,6 +79,7 @@ namespace SimpleFluid {
                 _fluidTex1 = new RenderTexture(_width, _height, 0, RenderTextureFormat.ARGBFloat);
         		_fluidTex0.wrapMode = _fluidTex1.wrapMode = _initTex.wrapMode = TextureWrapMode.Clamp;
         		_fluidTex0.filterMode = _fluidTex1.filterMode = _initTex.filterMode = FilterMode.Bilinear;
+				_fluidTex0.hideFlags = _fluidTex1.hideFlags = HideFlags.DontSave;
 
                 var initData = _initTex.GetPixels();
                 var boundaryData = _boundaryTex.GetPixels();
