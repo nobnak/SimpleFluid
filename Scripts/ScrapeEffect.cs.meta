@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 79ffe052a7033cd4c917ac6c17189987
+timeCreated: 1493542846
+licenseType: Pro
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - advectMat: {fileID: 2100000, guid: d5b088054081b5242b662262ee929b5c, type: 2}
+  - lerpMat: {fileID: 2100000, guid: a62021c9c8f5bb443b2df755de0a6b1e, type: 2}
+  - colorVisualizerMat: {fileID: 2100000, guid: e823d587331ddf44f90fd3335f847e31,
+      type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
