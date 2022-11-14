@@ -1,0 +1,18 @@
+{
+    "name": "SimpleFluid",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1660ea5965cce314f9c58a7eb6259838",
+        "GUID:50062d9838aa6f245b408563bbba59f6",
+        "GUID:d8b63aba1907145bea998dd612889d6b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

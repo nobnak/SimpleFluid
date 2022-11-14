@@ -2,15 +2,18 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 6
+  serializedVersion: 8
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: SimpleFluid_Lerp
   m_Shader: {fileID: 4800000, guid: b64bf2f5296b11a4fb25c030297b5e51, type: 3}
-  m_ShaderKeywords: 
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
   m_LightmapFlags: 5
   m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
@@ -29,11 +32,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    m_Ints: []
     m_Floats:
     - _Disappoint: 0.479
-    - _Dissipation: 0.001
+    - _Dissipation: 0.1
+    - _Emission: 0.1
     - _Fluidity: 0
     - _Rate: 0.01
     - _Restoration: 0.05
     - _Scale: 1
     m_Colors: []
+  m_BuildTextureStacks: []

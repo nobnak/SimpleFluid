@@ -1,12 +1,14 @@
-using nobnak.Gist;
-using nobnak.Gist.Events;
-using nobnak.Gist.Resizable;
+using Gist2.Extensions.LODExt;
+using Gist2.Extensions.SizeExt;
+using Gist2.Wrappers;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace SimpleFluid {
 	[RequireComponent(typeof(Camera))]
     public class FluidEffect : BaseFluidEffect {
-		public enum SimulationModeEnum { Fluid = 0, Scraped }
 		public enum OutputModeEnum { Normal = 0, Force, Fluid, AdvectionSource, AdvectedImage }
 
         public const string FLUIDABLE_KW_SOURCE = "FLUIDABLE_OUTPUT_SOURCE";
@@ -19,13 +21,10 @@ namespace SimpleFluid {
         public const string PROP_LERP_EMISSION = "_Emission";
         public const string PROP_LERP_DISSIPATION = "_Dissipation";
 
-		public TextureEvent OnUpdateAdvectedImageTexture;
+		public Tuner tuner = new Tuner();
+		public Events events = new Events();
 
-		public SimulationModeEnum simulationMode;
 		public OutputModeEnum outputMode;
-
-		[SerializeField]
-		protected Solver solver;
 		[SerializeField]
 		protected Material advectMat;
 		[SerializeField]
@@ -39,131 +38,200 @@ namespace SimpleFluid {
         public RenderTextureFormat textureFormatAdvected = RenderTextureFormat.ARGBFloat;
         public RenderTextureFormat textureFormatSource = RenderTextureFormat.ARGB32;
 
-        Camera _attachedCamera;
-    	LODRenderTexture _imageTex0;
-        LODRenderTexture _imageTex1;
-		ManuallyRenderCamera manualCam;
-		LODRenderTexture _sourceTex;
+		protected Camera _attachedCamera;
+
+		protected SimpleAndFastFluids solver;
+		protected RenderTextureWrapper fluid0, fluid1, image0, image1, source;
+		protected CameraWrapper captureCam;
+
+		#region properties
+		public Texture Force { get; set; }
+		#endregion
 
 		#region Unity
-        void Start() {
+		void OnEnable() {
+			solver = new SimpleAndFastFluids();
+
             _attachedCamera = GetComponent<Camera> ();
             _attachedCamera.depthTextureMode = DepthTextureMode.Depth;
 
-            manualCam = new ManuallyRenderCamera (_attachedCamera);
-            _imageTex0 = new LODRenderTexture ();
-            _imageTex1 = new LODRenderTexture ();
-            _sourceTex = new LODRenderTexture ();
+            captureCam = new CameraWrapper(c => {
+				if (c == null) {
+					var go = new GameObject("Capture");
+					go.hideFlags = HideFlags.DontSave;
+					c = go.AddComponent<Camera>();
+				}
+				c.CopyFrom(_attachedCamera);
+				c.enabled = false;
+				c.clearFlags = CameraClearFlags.Color;
+				c.backgroundColor = Color.clear;
+				c.cullingMask &= tuner.basics.cullingMask;
+				c.targetTexture = source;
+				return c;
+			});
 
-			var format0 = _imageTex0.Format;
-			format0.depth = 0;
-			format0.textureFormat = textureFormatAdvected;
-			format0.readWrite = RenderTextureReadWrite.Linear;
-			_imageTex0.Format = format0;
-			_imageTex1.Format = format0;
+			fluid0 = new RenderTextureWrapper(GenFluidTex);
+			fluid1 = new RenderTextureWrapper(GenFluidTex);
+			image0 = new RenderTextureWrapper(GenImageTex);
+			image1 = new RenderTextureWrapper(GenImageTex);
+			source = new RenderTextureWrapper(GenSourceTex);
 
-			var formatSource = _sourceTex.Format;
-			formatSource.depth = 24;
-			formatSource.textureFormat = textureFormatSource;
-			formatSource.readWrite = RenderTextureReadWrite.Linear;
-			formatSource.antiAliasing = QualitySettings.antiAliasing;
-
-			_imageTex0.AfterCreateTexture += UpdateAfterCreateTexture;
-            _imageTex1.AfterCreateTexture += UpdateAfterCreateTexture;
-
-            Prepare ();
-        }
-        void Update() {
-            var dt = solver.DeltaTime;
-            Prepare ();
-
-			if (simulationMode == SimulationModeEnum.Fluid) {
-				solver.Solve(dt);
-				UpdateImage(dt);
+			fluid0.Changed += v => {
+				if (v.Value != null) solver.Init(v);
+			};
+			fluid1.Changed += v => {
+				if (v.Value != null) solver.Init(v);
+			};
+			image0.Changed += v => {
+				if (v.Value != null) Clear(v);
+			};
+			image1.Changed += v => {
+				if (v.Value != null) Clear(v);
+			};
+		}
+		void OnDisable() {
+			if (solver != null) {
+				solver.Dispose();
+				solver = null;
 			}
+			captureCam.Dispose();
+			if (fluid0 != null) {
+				fluid0.Dispose();
+				fluid0 = null;
+			}
+			if (fluid1 != null) {
+				fluid1.Dispose();
+				fluid1 = null;
+			}
+			if (image0 != null) {
+				image0.Dispose();
+				image0 = null;
+			}
+			if (image1 != null) {
+				image1.Dispose();
+				image1 = null;
+			}
+			if (source != null) {
+				source.Dispose();
+				source = null;
+			}
+		}
+		void Update() {
+			var dt = solver.DeltaTime;
+			Prepare();
+			Solve(dt);
+			UpdateImage(dt);
 
-			CaptureAdvectionSource ();
-			InjectSourceColorToImage ();
-        }
+			CaptureAdvectionSource();
+			InjectSourceColorToImage();
+		}
 		void OnRenderImage(RenderTexture src, RenderTexture dst) {
             colorMatrix.Setup (colorVisualizerMat);
 
 			switch (outputMode) {
 			case OutputModeEnum.Fluid:
-                Graphics.Blit (solver.FluidTex, dst, colorVisualizerMat);
+                Graphics.Blit (fluid0, dst, colorVisualizerMat);
 				break;
 			case OutputModeEnum.Force:
-                Graphics.Blit (solver.ForceTex, dst, colorVisualizerMat);
+                Graphics.Blit (Force, dst, colorVisualizerMat);
 				break;
 			case OutputModeEnum.AdvectionSource:
-                Graphics.Blit (_sourceTex.Texture, dst, colorVisualizerMat);
+                Graphics.Blit (source, dst, colorVisualizerMat);
 				break;
 			case OutputModeEnum.AdvectedImage:
-                Graphics.Blit (_imageTex0.Texture, dst, colorVisualizerMat);
+                Graphics.Blit (image0, dst, colorVisualizerMat);
 				break;
 			default:
                 Graphics.Blit(src, dst);
 				break;
 			}
 		}
-        void OnDestroy() {
-            manualCam.Dispose ();
-            if (_imageTex0 != null) {
-                _imageTex0.Dispose ();
-                _imageTex0 = null;
-            }
-            if (_imageTex1 != null) {
-                _imageTex1.Dispose ();
-                _imageTex1 = null;
-            }
-            if (_sourceTex != null) {
-                _sourceTex.Dispose ();
-                _sourceTex = null;
-            }
-        }
 		#endregion
-		
-		protected void UpdateAfterCreateTexture(LODRenderTexture obj) {
-			obj.Texture.wrapMode = TextureWrapMode.Clamp;
-			obj.Texture.filterMode = FilterMode.Bilinear;
-			obj.Clear(Color.clear);
-		}
+
 		protected void Prepare () {
-            var width = _attachedCamera.pixelWidth;
-            var height = _attachedCamera.pixelHeight;
-			var size = new Vector2Int(width, height);
-            solver.SetSize (width >> lod, height >> lod);
-			_imageTex0.Lod = lod;
-			_imageTex1.Lod = lod;
-			_sourceTex.Lod = lod;
-			_imageTex0.Size = size;
-			_imageTex1.Size = size;
-			_sourceTex.Size = size;
-        }
+			var size = _attachedCamera.Size();
+			var size_solver = size.LOD(tuner.basics.lod_solver + tuner.basics.lod_image);
+			var size_image = size.LOD(tuner.basics.lod_image);
+			fluid0.Size = fluid1.Size = size_solver;
+			image0.Size = image1.Size = source.Size = size_image;
+		}
+
+		private void Solve(float dt) {
+			solver.Solve(fluid0, fluid1, Force, tuner.fluid, dt);
+			SimpleAndFastFluids.Swap(ref fluid0, ref fluid1);
+		}
 		protected void UpdateImage (float dt) {
-			solver.SetProperties(advectMat, PROP_FLUID_TEX);
+			advectMat.SetTexture(PROP_FLUID_TEX, fluid0);
 			advectMat.SetFloat(PROP_DT, dt);
-			Graphics.Blit(_imageTex0.Texture, _imageTex1.Texture, advectMat);
-			SwapImageTexture();
+			Graphics.Blit(image0, image1, advectMat);
+			SimpleAndFastFluids.Swap(ref image0, ref image1);
 		}
-
-		protected void SwapImageTexture() {
-			Solver.Swap(ref _imageTex0, ref _imageTex1);
-		}
-
 		protected void CaptureAdvectionSource () {
 			Shader.EnableKeyword (FLUIDABLE_KW_SOURCE);
-            manualCam.Render (_sourceTex.Texture);
+            captureCam.Value.Render();
 			Shader.DisableKeyword (FLUIDABLE_KW_SOURCE);
 		}
-
 		protected void InjectSourceColorToImage () {
-            lerpMat.SetFloat (PROP_LERP_EMISSION, lerpEmission);
-            lerpMat.SetFloat (PROP_LERP_DISSIPATION, lerpDissipation);
-            lerpMat.SetTexture (PROP_PREV_TEX, _imageTex0.Texture);
-            Graphics.Blit (_sourceTex.Texture, _imageTex1.Texture, lerpMat);
-            OnUpdateAdvectedImageTexture.Invoke (_imageTex1.Texture);
-			SwapImageTexture();
+            lerpMat.SetFloat (PROP_LERP_EMISSION, tuner.basics.lerpEmission);
+            lerpMat.SetFloat (PROP_LERP_DISSIPATION, tuner.basics.lerpDissipation);
+            lerpMat.SetTexture (PROP_PREV_TEX, image0);
+            Graphics.Blit (source, image1, lerpMat);
+            events.OnUpdateAdvectedImageTexture?.Invoke (image1);
+			SimpleAndFastFluids.Swap(ref image0, ref image1);
 		}
-    }
+		protected RenderTexture GenFluidTex(int2 size) {
+			var tex = new RenderTexture(size.x, size.y, 0, textureFormatAdvected);
+			tex.hideFlags = HideFlags.DontSave;
+			tex.wrapMode = TextureWrapMode.Clamp;
+			return tex;
+		}
+		protected RenderTexture GenImageTex(int2 size) {
+			var tex = new RenderTexture(size.x, size.y, 0, textureFormatAdvected);
+			tex.hideFlags = HideFlags.DontSave;
+			tex.filterMode = FilterMode.Bilinear;
+			tex.wrapMode = TextureWrapMode.Clamp;
+			return tex;
+		}
+		protected RenderTexture GenSourceTex(int2 size) {
+			var tex = new RenderTexture(size.x, size.y, 0, textureFormatSource, RenderTextureReadWrite.Linear); ;
+			tex.hideFlags = HideFlags.DontSave;
+			tex.antiAliasing = math.max(1, QualitySettings.antiAliasing);
+			return tex;
+		}
+		protected void Clear(RenderTexture rt) {
+			var active = RenderTexture.active;
+			RenderTexture.active = rt;
+			GL.Clear(true, true, Color.clear);
+			RenderTexture.active = active;
+		}
+
+		#region declarations
+		[System.Serializable]
+		public class Events {
+			public TextureEvent OnUpdateAdvectedImageTexture = new TextureEvent();
+
+			[System.Serializable]
+			public class TextureEvent : UnityEvent<Texture> { }
+		}
+		[System.Serializable]
+		public class BasicTuner {
+			[Header("Lerp Material")]
+			public float lerpEmission = 0.1f;
+			public float lerpDissipation = 0.1f;
+
+			[Header("Quality")]
+			[Range(0, 4)]
+			[FormerlySerializedAs("lod")]
+			public int lod_solver = 1;
+			public int lod_image = 1;
+
+			public LayerMask cullingMask = -1;
+		}
+		[System.Serializable]
+		public class Tuner {
+			public BasicTuner basics = new BasicTuner();
+			public SimpleAndFastFluids.Tuner fluid = new SimpleAndFastFluids.Tuner();
+		}
+		#endregion
+	}
 }

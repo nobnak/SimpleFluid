@@ -3,6 +3,7 @@ using nobnak.Gist.Events;
 using nobnak.Gist.Resizable;
 using SimpleFluid;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace SimpleFluid {
 
@@ -20,6 +21,7 @@ namespace SimpleFluid {
         public const string PROP_LERP_EMISSION = "_Emission";
         public const string PROP_LERP_DISSIPATION = "_Dissipation";
 
+		public Tuner tuner = new Tuner();
 		public TextureEvent OnUpdateAdvectedImageTexture;
 
 		public OutputModeEnum outputMode;
@@ -132,22 +134,20 @@ namespace SimpleFluid {
         }
 
 		protected void SwapImageTexture() {
-			Solver.Swap(ref _imageTex0, ref _imageTex1);
+			SimpleAndFastFluids.Swap(ref _imageTex0, ref _imageTex1);
 		}
 
 		protected void CaptureAdvectionSource () {
 			Shader.EnableKeyword (FLUIDABLE_KW_SOURCE);
-            manualCam.Render (_sourceTex.Texture);
+            manualCam.Render (_sourceTex.Texture, tuner.basics.cullingMask);
 			Shader.DisableKeyword (FLUIDABLE_KW_SOURCE);
 		}
 
 		protected void InjectSourceColorToImage () {
-			lerpMat.SetFloat(PROP_LERP_EMISSION, lerpEmission);
-			lerpMat.SetFloat(PROP_LERP_DISSIPATION, lerpDissipation);
+			lerpMat.SetFloat(PROP_LERP_EMISSION, tuner.basics.lerpEmission);
+			lerpMat.SetFloat(PROP_LERP_DISSIPATION, tuner.basics.lerpDissipation);
 			lerpMat.SetTexture(PROP_PREV_TEX, _imageTex0.Texture);
 			Graphics.Blit(_sourceTex.Texture, _imageTex1.Texture, lerpMat);
-			//_sourceTex.Release();
-			//_imageTex0.Release();
 			
 			NotifyTextureOnChange(_imageTex1.Texture);
 			SwapImageTexture();
@@ -156,5 +156,26 @@ namespace SimpleFluid {
 		private void NotifyTextureOnChange(Texture tex) {
 			OnUpdateAdvectedImageTexture.Invoke(tex);
 		}
+
+		#region declarations
+		[System.Serializable]
+		public class BasicTuner {
+			[Header("Lerp Material")]
+			public float lerpEmission = 0.1f;
+			public float lerpDissipation = 0.1f;
+
+			[Header("Quality")]
+			[Range(0, 4)]
+			[FormerlySerializedAs("lod")]
+			public int lod_solver = 1;
+			public int lod_image = 1;
+
+			public LayerMask cullingMask = -1;
+		}
+		[System.Serializable]
+		public class Tuner {
+			public BasicTuner basics = new BasicTuner();
+		}
+		#endregion
 	}
 }
