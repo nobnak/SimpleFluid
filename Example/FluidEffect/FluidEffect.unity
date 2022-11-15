@@ -216,7 +216,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 711871905}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: Visualizer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -253,7 +253,7 @@ GameObject:
   - component: {fileID: 1249029198}
   - component: {fileID: 1249029197}
   - component: {fileID: 1249029196}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: Fluid Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -269,7 +269,7 @@ Transform:
   m_GameObject: {fileID: 1249029194}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -1}
-  m_LocalScale: {x: 19.263323, y: 10, z: 1}
+  m_LocalScale: {x: 17.358757, y: 10, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 711871905}
@@ -402,25 +402,33 @@ MonoBehaviour:
       lod_image: 1
       cullingMask:
         serializedVersion: 2
-        m_Bits: 4294967295
+        m_Bits: 1
     fluid:
-      forcePower: 0.002
+      forcePower: 100
       k: 0.12
       vis: 0.1
-      timeStep: 0.1
-      timeScale: 5
+      timeStep: 0.01
+      timeScale: 1
+    debug:
+      outputMode: 0
   events:
     OnUpdateAdvectedImageTexture:
       m_PersistentCalls:
-        m_Calls: []
-  outputMode: 0
+        m_Calls:
+        - m_Target: {fileID: 1249029196}
+          m_TargetAssemblyTypeName: nobnak.Gist.Layers.LayerPanel, nobnak.Gist
+          m_MethodName: SetTexture
+          m_Mode: 0
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 1
   advectMat: {fileID: 2100000, guid: d5b088054081b5242b662262ee929b5c, type: 2}
   lerpMat: {fileID: 2100000, guid: a9122da23ef9c3a4d89860aea8726720, type: 2}
-  colorMatrix:
-    filmMode: 0
-    blendMode: 0
-    backgroundColor: {r: 1, g: 1, b: 1, a: 0}
-  colorVisualizerMat: {fileID: 2100000, guid: e823d587331ddf44f90fd3335f847e31, type: 2}
   textureFormatAdvected: 11
   textureFormatSource: 2
 --- !u!20 &1266903505
@@ -535,7 +543,7 @@ GameObject:
   - component: {fileID: 2076707949}
   - component: {fileID: 2076707948}
   - component: {fileID: 2076707947}
-  m_Layer: 0
+  m_Layer: 20
   m_Name: Force Field
   m_TagString: Untagged
   m_Icon: {fileID: 0}

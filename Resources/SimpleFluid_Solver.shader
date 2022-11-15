@@ -100,9 +100,10 @@
 
 				// Boundary
 				float2 px = i.uv.xy * _MainTex_TexelSize.zw;
-				if (any(px < 1) || any(_MainTex_TexelSize.zw - px) < 1)
+				if (any(px < 1) || any((_MainTex_TexelSize.zw - px) < 1))
 					u = float4(0, 0, 0, 1);
 
+				u.z = saturate(dot(1, max(0, -u.xy)));
 				return u;
 			}
 			ENDCG

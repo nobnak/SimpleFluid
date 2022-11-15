@@ -24,15 +24,10 @@ namespace SimpleFluid {
 		public Tuner tuner = new Tuner();
 		public Events events = new Events();
 
-		public OutputModeEnum outputMode;
 		[SerializeField]
 		protected Material advectMat;
 		[SerializeField]
 		protected Material lerpMat;
-
-        [Header("Visualizer")]
-        public ColorMatrix colorMatrix;
-        public Material colorVisualizerMat;
 
         [Header("Texture Format")]
         public RenderTextureFormat textureFormatAdvected = RenderTextureFormat.ARGBFloat;
@@ -77,10 +72,13 @@ namespace SimpleFluid {
 			source = new RenderTextureWrapper(GenSourceTex);
 
 			fluid0.Changed += v => {
-				if (v.Value != null) solver.Init(v);
+				if (solver != null) {
+					solver.Init();
+					if (v.Value != null) solver.Clear(v);
+				}
 			};
 			fluid1.Changed += v => {
-				if (v.Value != null) solver.Init(v);
+				if (v.Value != null) solver.Clear(v);
 			};
 			image0.Changed += v => {
 				if (v.Value != null) Clear(v);
@@ -90,10 +88,6 @@ namespace SimpleFluid {
 			};
 		}
 		void OnDisable() {
-			if (solver != null) {
-				solver.Dispose();
-				solver = null;
-			}
 			captureCam.Dispose();
 			if (fluid0 != null) {
 				fluid0.Dispose();
@@ -115,39 +109,43 @@ namespace SimpleFluid {
 				source.Dispose();
 				source = null;
 			}
+			if (solver != null) {
+				solver.Dispose();
+				solver = null;
+			}
 		}
 		void Update() {
-			var dt = solver.DeltaTime;
+			var dt = Time.deltaTime;
 			Prepare();
 			Solve(dt);
 			UpdateImage(dt);
 
 			CaptureAdvectionSource();
 			InjectSourceColorToImage();
+			Notify();
 		}
-		void OnRenderImage(RenderTexture src, RenderTexture dst) {
-            colorMatrix.Setup (colorVisualizerMat);
-
-			switch (outputMode) {
+		void Notify() {
+			Texture target = null;
+			switch (tuner.debug.outputMode) {
 			case OutputModeEnum.Fluid:
-                Graphics.Blit (fluid0, dst, colorVisualizerMat);
+                target = fluid0;
 				break;
 			case OutputModeEnum.Force:
-                Graphics.Blit (Force, dst, colorVisualizerMat);
+                target = Force;
 				break;
 			case OutputModeEnum.AdvectionSource:
-                Graphics.Blit (source, dst, colorVisualizerMat);
+                target = source;
 				break;
 			case OutputModeEnum.AdvectedImage:
-                Graphics.Blit (image0, dst, colorVisualizerMat);
-				break;
 			default:
-                Graphics.Blit(src, dst);
+				target = image0;
 				break;
 			}
+			events.OnUpdateAdvectedImageTexture?.Invoke(target);
 		}
 		#endregion
 
+		#region methods
 		protected void Prepare () {
 			var size = _attachedCamera.Size();
 			var size_solver = size.LOD(tuner.basics.lod_solver + tuner.basics.lod_image);
@@ -176,7 +174,6 @@ namespace SimpleFluid {
             lerpMat.SetFloat (PROP_LERP_DISSIPATION, tuner.basics.lerpDissipation);
             lerpMat.SetTexture (PROP_PREV_TEX, image0);
             Graphics.Blit (source, image1, lerpMat);
-            events.OnUpdateAdvectedImageTexture?.Invoke (image1);
 			SimpleAndFastFluids.Swap(ref image0, ref image1);
 		}
 		protected RenderTexture GenFluidTex(int2 size) {
@@ -204,6 +201,7 @@ namespace SimpleFluid {
 			GL.Clear(true, true, Color.clear);
 			RenderTexture.active = active;
 		}
+		#endregion
 
 		#region declarations
 		[System.Serializable]
@@ -228,9 +226,14 @@ namespace SimpleFluid {
 			public LayerMask cullingMask = -1;
 		}
 		[System.Serializable]
+		public class DebugTuner {
+			public OutputModeEnum outputMode;
+		}
+		[System.Serializable]
 		public class Tuner {
 			public BasicTuner basics = new BasicTuner();
 			public SimpleAndFastFluids.Tuner fluid = new SimpleAndFastFluids.Tuner();
+			public DebugTuner debug = new DebugTuner();
 		}
 		#endregion
 	}

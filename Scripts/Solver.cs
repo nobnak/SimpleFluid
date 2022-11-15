@@ -1,4 +1,5 @@
 using Gist2.Extensions.ComponentExt;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace SimpleFluid {
@@ -18,13 +19,13 @@ namespace SimpleFluid {
         public const string PROP_FORCE_POWER = "_ForcePower";
 
 		protected Material mat;
+		protected float t_residue = 0;
 
 		public SimpleAndFastFluids() {
 			mat = new Material(Resources.Load<Shader>(PATH));
 		}
 
 		#region properties
-		public float DeltaTime => Time.deltaTime;
 		#endregion
 
 		#region IDisposable
@@ -38,22 +39,31 @@ namespace SimpleFluid {
 
 		public static void Swap<T>(ref T t0, ref T t1) { var tmp = t0; t0 = t1; t1 = tmp; }
 
-		public void Init(RenderTexture fluid0) {
+		public void Init() {
+			t_residue = 0f;
+		}
+		public void Clear(RenderTexture fluid0) {
 			Graphics.Blit(null, fluid0, mat, (int)S_SOLVER.Init);
 		}
         public void Solve(RenderTexture fluid0, RenderTexture fluid1, Texture force, 
 			Tuner tuner, float dt) {
 
-			var kvis = tuner.vis;
-            var s = tuner.k / dt;
+			t_residue += dt * tuner.timeScale;
+			var n = math.max(0, (int)math.floor(t_residue / tuner.timeStep));
+			t_residue = math.max(0, t_residue - n * tuner.timeStep);
 
-            mat.SetTexture(PROP_FORCE_TEX, force);
-            mat.SetFloat(PROP_FORCE_POWER, tuner.forcePower);
-            mat.SetFloat(PROP_DT, dt);
-            mat.SetFloat(PROP_K_VIS, kvis);
-            mat.SetFloat(PROP_S, s);
-    		Graphics.Blit (fluid0, fluid1, mat, (int)S_SOLVER.Fluid);
-    		Swap (ref fluid0, ref fluid1);
+			for (var i = 0; i < n; i++) {
+				var kvis = tuner.vis;
+				var s = tuner.k / dt;
+
+				mat.SetTexture(PROP_FORCE_TEX, force);
+				mat.SetFloat(PROP_FORCE_POWER, tuner.forcePower);
+				mat.SetFloat(PROP_DT, tuner.timeStep);
+				mat.SetFloat(PROP_K_VIS, kvis);
+				mat.SetFloat(PROP_S, s);
+				Graphics.Blit(fluid0, fluid1, mat, (int)S_SOLVER.Fluid);
+				Swap(ref fluid0, ref fluid1);
+			}
         }
 
 		#region declarations

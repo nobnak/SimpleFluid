@@ -6,17 +6,15 @@
 	SubShader {
 		Tags { "RenderType"="Transparent" "Queue"="Transparent" "IgnoreProjector"="True" }
         Cull Off ZTest LEqual ZWrite Off
-        //Blend One OneMinusSrcAlpha
-        Blend SrcAlpha OneMinusSrcAlpha
+        Blend One Zero
 
 		Pass {
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-            #pragma multi_compile FLUIDABLE_OUTPUT_COLOR FLUIDABLE_OUTPUT_SOURCE
 			
 			#include "UnityCG.cginc"
-            #include "Assets/Packages/SimpleFluid/Shaders/SimpleFluid_Fluidable.cginc"
+            #include_with_pragmas "Assets/Packages/SimpleFluid/Shaders/SimpleFluid_Fluidable.cginc"
 
 			struct appdata {
 				float4 vertex : POSITION;
