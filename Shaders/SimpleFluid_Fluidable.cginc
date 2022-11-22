@@ -17,5 +17,8 @@ float4 fluidOutMultiplier(float4 picture, float fluidity) {
 float4 fluidOutMultiplier(float4 picture) {
     return fluidOutMultiplier(picture, 1.0);
 }
+void fluidOutMultiplier_float(float4 cin, out float4 cout) {
+    cout = fluidOutMultiplier(cin, 1.0);
+}
 
 #endif

@@ -21,6 +21,7 @@ namespace SimpleFluid {
         public const string PROP_LERP_EMISSION = "_Emission";
         public const string PROP_LERP_DISSIPATION = "_Dissipation";
 
+		public Preset preset = new Preset();
 		public Tuner tuner = new Tuner();
 		public Events events = new Events();
 
@@ -60,7 +61,7 @@ namespace SimpleFluid {
 				c.enabled = false;
 				c.clearFlags = CameraClearFlags.Color;
 				c.backgroundColor = Color.clear;
-				c.cullingMask &= tuner.basics.cullingMask;
+				c.cullingMask = (c.cullingMask & preset.cullingMask) + preset.additionalMask;
 				c.targetTexture = source;
 				return c;
 			});
@@ -145,13 +146,27 @@ namespace SimpleFluid {
 		}
 		#endregion
 
+		#region interfaces
+		public void Reset() {
+			fluid0?.Release();
+			fluid1?.Release();
+			image0?.Release();
+			image1?.Release();
+			source?.Release();
+		}
+		#endregion
+
 		#region methods
 		protected void Prepare () {
 			var size = _attachedCamera.Size();
 			var size_solver = size.LOD(tuner.basics.lod_solver + tuner.basics.lod_image);
 			var size_image = size.LOD(tuner.basics.lod_image);
+			var prev_solver = fluid0.Size;
+			var prev_image = image0.Size;
 			fluid0.Size = fluid1.Size = size_solver;
 			image0.Size = image1.Size = source.Size = size_image;
+			if (math.any(size_solver != prev_solver) || math.any(size_image != prev_image))
+				Debug.Log($"Fluid size changed: fluid={size_solver} image={size_image}");
 		}
 
 		private void Solve(float dt) {
@@ -205,6 +220,11 @@ namespace SimpleFluid {
 
 		#region declarations
 		[System.Serializable]
+		public class Preset {
+			public LayerMask cullingMask = -1;
+			public LayerMask additionalMask = 0;
+		}
+		[System.Serializable]
 		public class Events {
 			public TextureEvent OnUpdateAdvectedImageTexture = new TextureEvent();
 
@@ -222,8 +242,6 @@ namespace SimpleFluid {
 			[FormerlySerializedAs("lod")]
 			public int lod_solver = 1;
 			public int lod_image = 1;
-
-			public LayerMask cullingMask = -1;
 		}
 		[System.Serializable]
 		public class DebugTuner {

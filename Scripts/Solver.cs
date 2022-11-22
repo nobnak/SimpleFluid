@@ -69,11 +69,11 @@ namespace SimpleFluid {
 		#region declarations
 		[System.Serializable]
 		public class Tuner {
-			public float forcePower = 0.002f;
+			public float forcePower = 1f;
 			public float k = 0.12f;
 			public float vis = 0.1f;
-			public float timeStep = 0.1f;
-			public float timeScale = 5f;
+			public float timeStep = 0.01f;
+			public float timeScale = 1f;
 		}
 		#endregion
 	}
