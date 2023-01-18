@@ -1,8 +1,10 @@
-using nobnak.Gist;
-using nobnak.Gist.Events;
-using nobnak.Gist.Resizable;
-using SimpleFluid;
+using Gist2.Extensions.LODExt;
+using Gist2.Extensions.SizeExt;
+using Gist2.Wrappers;
+using NvAPIWrapper.Native.Display.Structures;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Serialization;
 
 namespace SimpleFluid {
@@ -22,142 +24,144 @@ namespace SimpleFluid {
         public const string PROP_LERP_DISSIPATION = "_Dissipation";
 
 		public Tuner tuner = new Tuner();
-		public TextureEvent OnUpdateAdvectedImageTexture;
-
-		public OutputModeEnum outputMode;
+		public Events events = new Events();
+		public Preset preset = new Preset();
 
 		[SerializeField]
 		protected Material lerpMat;
-
-        [Header("Visualizer")]
-        public ColorMatrix colorMatrix;
-        public Material colorVisualizerMat;
 
         [Header("Texture Format")]
         public UnityEngine.RenderTextureFormat textureFormatAdvected = UnityEngine.RenderTextureFormat.ARGBFloat;
         public UnityEngine.RenderTextureFormat textureFormatSource = UnityEngine.RenderTextureFormat.ARGB32;
 
-        Camera _attachedCamera;
-		ManuallyRenderCamera manualCam;
-		ResizableRenderTexture _imageTex0;
-		ResizableRenderTexture _imageTex1;
-		ResizableRenderTexture _sourceTex;
+        protected Camera _attachedCamera;
+		protected CameraWrapper captureCam;
+		protected RenderTextureWrapper image0, image1, source;
 
 		#region Unity
         protected virtual void OnEnable() {
             _attachedCamera = GetComponent<Camera> ();
-            _attachedCamera.depthTextureMode = DepthTextureMode.Depth;
+            _attachedCamera.depthTextureMode |= DepthTextureMode.Depth;
 
-            manualCam = new ManuallyRenderCamera (_attachedCamera);
-#if TEMPORAL
-			_imageTex0 = new TemporalResizableRenderTexture(new nobnak.Gist.Resizable.FormatRT() {
-				depth = 0,
-				textureFormat = textureFormatAdvected,
-				readWrite = RenderTextureReadWrite.Linear
+			captureCam = new CameraWrapper(c => {
+				if (c == null) {
+					var go = new GameObject("Capture");
+					go.hideFlags = HideFlags.DontSave;
+					c = go.AddComponent<Camera>();
+				}
+				c.CopyFrom(_attachedCamera);
+				c.enabled = false;
+				c.clearFlags = CameraClearFlags.Color;
+				c.backgroundColor = Color.clear;
+				c.cullingMask = (c.cullingMask & preset.cullingMask);
+				c.targetTexture = source;
+				return c;
 			});
-			_imageTex1 = new TemporalResizableRenderTexture(new nobnak.Gist.Resizable.FormatRT() {
-				depth = 0,
-				textureFormat = textureFormatAdvected,
-				readWrite = RenderTextureReadWrite.Linear
-			});
-			_sourceTex = new TemporalResizableRenderTexture(new nobnak.Gist.Resizable.FormatRT() {
-				depth = 24,
-				textureFormat = textureFormatSource,
-				readWrite = RenderTextureReadWrite.Linear,
-				antiAliasing = QualitySettings.antiAliasing
-			});
-#else
-			_imageTex0 = new ResizableRenderTexture(new nobnak.Gist.Resizable.FormatRT() {
-				depth = 0,
-				textureFormat = textureFormatAdvected,
-				readWrite = RenderTextureReadWrite.Linear,
-				filterMode = FilterMode.Point
-			});
-			_imageTex1 = new ResizableRenderTexture(new nobnak.Gist.Resizable.FormatRT() {
-				depth = 0,
-				textureFormat = textureFormatAdvected,
-				readWrite = RenderTextureReadWrite.Linear,
-				filterMode = FilterMode.Point
-			});
-			_sourceTex = new ResizableRenderTexture(new nobnak.Gist.Resizable.FormatRT() {
-				depth = 24,
-				textureFormat = textureFormatSource,
-				readWrite = RenderTextureReadWrite.Linear,
-				antiAliasing = QualitySettings.antiAliasing
-			});
-#endif
 
-			Prepare();
+			image0 = new RenderTextureWrapper(GenImageTex);
+			image1 = new RenderTextureWrapper(GenImageTex);
+			source = new RenderTextureWrapper(GenSourceTex);
+
+			image0.Changed += v => {
+				if (v.Value != null) Clear(v);
+			};
+			image1.Changed += v => {
+				if (v.Value != null) Clear(v);
+			};
         }
 		protected virtual void Update() {
             Prepare ();
 			CaptureAdvectionSource ();
 			InjectSourceColorToImage ();
+			Notify();
         }
-		protected virtual void OnRenderImage(RenderTexture src, RenderTexture dst) {
-            colorMatrix.Setup (colorVisualizerMat);
+		protected virtual void OnDisable() {
+            captureCam.Dispose ();
+            if (image0 != null) {
+				image0.Dispose ();
+				image0 = null;
+            }
+            if (image1 != null) {
+				image1.Dispose ();
+				image1 = null;
+            }
+            if (source != null) {
+				source.Dispose ();
+				source = null;
+            }
+        }
+		#endregion
 
-			switch (outputMode) {
-			case OutputModeEnum.AdvectionSource:
-                Graphics.Blit (_sourceTex.Texture, dst, colorVisualizerMat);
+		#region methods
+		void Notify() {
+			Texture target = null;
+			switch (tuner.debug.outputMode) {
+				case OutputModeEnum.AdvectionSource:
+				target = source;
 				break;
-			case OutputModeEnum.AdvectedImage:
-                Graphics.Blit (_imageTex0.Texture, dst, colorVisualizerMat);
-				break;
-			default:
-                Graphics.Blit(src, dst);
+				default:
+				target = image0;
 				break;
 			}
+			events.OnUpdateAdvectedImageTexture?.Invoke(target);
 		}
-		protected virtual void OnDisable() {
-			//NotifyTextureOnChange(null);
-            manualCam.Dispose ();
-            if (_imageTex0 != null) {
-                _imageTex0.Dispose ();
-                _imageTex0 = null;
-            }
-            if (_imageTex1 != null) {
-                _imageTex1.Dispose ();
-                _imageTex1 = null;
-            }
-            if (_sourceTex != null) {
-                _sourceTex.Dispose ();
-                _sourceTex = null;
-            }
-        }
-#endregion
-
 		protected void Prepare () {
-			var size = new Vector2Int(_attachedCamera.pixelWidth, _attachedCamera.pixelHeight);
-			_imageTex0.Size = _imageTex1.Size = _sourceTex.Size = size;
-			//_imageTex0.Lod = _imageTex1.Lod = _sourceTex.Lod = lod;
-        }
+			var size = _attachedCamera.Size();
+			var size_image = size.LOD(tuner.basics.lod_image);
+			var prev_image = image0.Size;
 
-		protected void SwapImageTexture() {
-			SimpleAndFastFluids.Swap(ref _imageTex0, ref _imageTex1);
+			image0.Size = image1.Size = source.Size = size_image;
+			if (math.any(size_image != prev_image))
+				Debug.Log($"Bombing size changed: image={size_image}");
 		}
-
 		protected void CaptureAdvectionSource () {
 			Shader.EnableKeyword (FLUIDABLE_KW_SOURCE);
-            manualCam.Render (_sourceTex.Texture, tuner.basics.cullingMask);
+			captureCam.Value.Render();
 			Shader.DisableKeyword (FLUIDABLE_KW_SOURCE);
 		}
-
 		protected void InjectSourceColorToImage () {
 			lerpMat.SetFloat(PROP_LERP_EMISSION, tuner.basics.lerpEmission);
 			lerpMat.SetFloat(PROP_LERP_DISSIPATION, tuner.basics.lerpDissipation);
-			lerpMat.SetTexture(PROP_PREV_TEX, _imageTex0.Texture);
-			Graphics.Blit(_sourceTex.Texture, _imageTex1.Texture, lerpMat);
-			
-			NotifyTextureOnChange(_imageTex1.Texture);
-			SwapImageTexture();
-		}
+			lerpMat.SetTexture(PROP_PREV_TEX, image0);
+			Graphics.Blit(source, image1, lerpMat);
 
-		private void NotifyTextureOnChange(Texture tex) {
-			OnUpdateAdvectedImageTexture.Invoke(tex);
+			SimpleAndFastFluids.Swap(ref image0, ref image1);
+
+			events.OnUpdateAdvectedImageTexture?.Invoke(image1);
 		}
+		protected RenderTexture GenImageTex(int2 size) {
+			var tex = new RenderTexture(size.x, size.y, 0, textureFormatAdvected);
+			tex.hideFlags = HideFlags.DontSave;
+			tex.filterMode = FilterMode.Bilinear;
+			tex.wrapMode = TextureWrapMode.Clamp;
+			return tex;
+		}
+		protected RenderTexture GenSourceTex(int2 size) {
+			var tex = new RenderTexture(size.x, size.y, 0, textureFormatSource, RenderTextureReadWrite.Linear); ;
+			tex.hideFlags = HideFlags.DontSave;
+			tex.antiAliasing = math.max(1, QualitySettings.antiAliasing);
+			return tex;
+		}
+		protected void Clear(RenderTexture rt) {
+			var active = RenderTexture.active;
+			RenderTexture.active = rt;
+			GL.Clear(true, true, Color.clear);
+			RenderTexture.active = active;
+		}
+		#endregion
 
 		#region declarations
+		[System.Serializable]
+		public class Preset {
+			public LayerMask cullingMask = -1;
+		}
+		[System.Serializable]
+		public class Events {
+			public TextureEvent OnUpdateAdvectedImageTexture = new TextureEvent();
+
+			[System.Serializable]
+			public class TextureEvent : UnityEvent<Texture> { }
+		}
 		[System.Serializable]
 		public class BasicTuner {
 			[Header("Lerp Material")]
@@ -167,14 +171,18 @@ namespace SimpleFluid {
 			[Header("Quality")]
 			[Range(0, 4)]
 			[FormerlySerializedAs("lod")]
-			public int lod_solver = 1;
 			public int lod_image = 1;
 
 			public LayerMask cullingMask = -1;
 		}
 		[System.Serializable]
+		public class DebugTuner {
+			public OutputModeEnum outputMode;
+		}
+		[System.Serializable]
 		public class Tuner {
 			public BasicTuner basics = new BasicTuner();
+			public DebugTuner debug = new DebugTuner();
 		}
 		#endregion
 	}
