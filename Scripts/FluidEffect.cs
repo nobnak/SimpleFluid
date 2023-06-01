@@ -13,13 +13,14 @@ namespace SimpleFluid {
 
         public const string FLUIDABLE_KW_SOURCE = "FLUIDABLE_OUTPUT_SOURCE";
 
-        public const string PROP_FLUID_TEX = "_FluidTex";
-        public const string PROP_IMAGE_TEX = "_ImageTex";
-		public const string PROP_PREV_TEX = "_PrevTex";
-        public const string PROP_DT = "_Dt";
+        public static readonly int P_FluidTex = Shader.PropertyToID("_FluidTex");
+        public static readonly int P_ImageTex = Shader.PropertyToID("_ImageTex");
+		public static readonly int P_PrevTex = Shader.PropertyToID("_PrevTex");
 
-        public const string PROP_LERP_EMISSION = "_Emission";
-        public const string PROP_LERP_DISSIPATION = "_Dissipation";
+		public static readonly int P_Dt = Shader.PropertyToID("_Dt");
+
+        public static readonly int P_Emission = Shader.PropertyToID("_Emission");
+        public static readonly int P_Dissipation = Shader.PropertyToID("_Dissipation");
 
 		public Preset preset = new Preset();
 		public Tuner tuner = new Tuner();
@@ -42,6 +43,7 @@ namespace SimpleFluid {
 
 		#region properties
 		public Texture Force { get; set; }
+		public Texture Input_Boundary { protected get; set; }
 		#endregion
 
 		#region Unity
@@ -126,7 +128,7 @@ namespace SimpleFluid {
 			Notify();
 		}
 		void Notify() {
-			Texture target = null;
+			Texture target;
 			switch (tuner.debug.outputMode) {
 			case OutputModeEnum.Fluid:
                 target = fluid0;
@@ -170,12 +172,12 @@ namespace SimpleFluid {
 		}
 
 		private void Solve(float dt) {
-			solver.Solve(fluid0, fluid1, Force, tuner.fluid, dt);
+			solver.Solve(fluid0, fluid1, tuner.fluid, dt, force: Force, boundary: Input_Boundary);
 			SimpleAndFastFluids.Swap(ref fluid0, ref fluid1);
 		}
 		protected void UpdateImage (float dt) {
-			advectMat.SetTexture(PROP_FLUID_TEX, fluid0);
-			advectMat.SetFloat(PROP_DT, dt);
+			advectMat.SetTexture(P_FluidTex, fluid0);
+			advectMat.SetFloat(P_Dt, dt);
 			Graphics.Blit(image0, image1, advectMat);
 			SimpleAndFastFluids.Swap(ref image0, ref image1);
 		}
@@ -185,9 +187,9 @@ namespace SimpleFluid {
 			Shader.DisableKeyword (FLUIDABLE_KW_SOURCE);
 		}
 		protected void InjectSourceColorToImage () {
-            lerpMat.SetFloat (PROP_LERP_EMISSION, tuner.basics.lerpEmission);
-            lerpMat.SetFloat (PROP_LERP_DISSIPATION, tuner.basics.lerpDissipation);
-            lerpMat.SetTexture (PROP_PREV_TEX, image0);
+            lerpMat.SetFloat (P_Emission, tuner.basics.lerpEmission);
+            lerpMat.SetFloat (P_Dissipation, tuner.basics.lerpDissipation);
+            lerpMat.SetTexture (P_PrevTex, image0);
             Graphics.Blit (source, image1, lerpMat);
 			SimpleAndFastFluids.Swap(ref image0, ref image1);
 		}

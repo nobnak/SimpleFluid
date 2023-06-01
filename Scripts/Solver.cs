@@ -12,11 +12,13 @@ namespace SimpleFluid {
 
 		public const string PATH = "SimpleFluid_Solver";
 
-		public const string PROP_FORCE_TEX = "_ForceTex";
-        public const string PROP_DT = "_Dt";
-        public const string PROP_K_VIS = "_KVis";
-        public const string PROP_S = "_S";
-        public const string PROP_FORCE_POWER = "_ForcePower";
+		public static readonly int P_ForceTex = Shader.PropertyToID("_ForceTex");
+		public static readonly int P_BoundaryTex = Shader.PropertyToID("_BoundaryTex");
+		
+		public static readonly int P_Dt = Shader.PropertyToID("_Dt");
+        public static readonly int P_KVis = Shader.PropertyToID("_KVis");
+        public static readonly int P_S = Shader.PropertyToID("_S");
+        public static readonly int P_ForcePower = Shader.PropertyToID("_ForcePower");
 
 		protected Material mat;
 		protected float t_residue = 0;
@@ -45,8 +47,11 @@ namespace SimpleFluid {
 		public void Clear(RenderTexture fluid0) {
 			Graphics.Blit(null, fluid0, mat, (int)S_SOLVER.Init);
 		}
-        public void Solve(RenderTexture fluid0, RenderTexture fluid1, Texture force, 
-			Tuner tuner, float dt) {
+        public void Solve(RenderTexture fluid0, RenderTexture fluid1,
+			Tuner tuner, float dt,
+			Texture force = null,
+			Texture	boundary = null
+			) {
 
 			t_residue += dt * tuner.timeScale;
 			var n = math.max(0, (int)math.floor(t_residue / tuner.timeStep));
@@ -56,11 +61,12 @@ namespace SimpleFluid {
 				var kvis = tuner.vis;
 				var s = tuner.k / dt;
 
-				mat.SetTexture(PROP_FORCE_TEX, force);
-				mat.SetFloat(PROP_FORCE_POWER, tuner.forcePower);
-				mat.SetFloat(PROP_DT, tuner.timeStep);
-				mat.SetFloat(PROP_K_VIS, kvis);
-				mat.SetFloat(PROP_S, s);
+				mat.SetTexture(P_ForceTex, force);
+				mat.SetTexture(P_BoundaryTex, boundary);
+				mat.SetFloat(P_ForcePower, tuner.forcePower);
+				mat.SetFloat(P_Dt, tuner.timeStep);
+				mat.SetFloat(P_KVis, kvis);
+				mat.SetFloat(P_S, s);
 				Graphics.Blit(fluid0, fluid1, mat, (int)S_SOLVER.Fluid);
 				Swap(ref fluid0, ref fluid1);
 			}
