@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: SimpleFluid_Advect
   m_Shader: {fileID: 4800000, guid: d1633eb3a86ae50448e0f4ea0e2d7a30, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 5
@@ -17,6 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -35,6 +38,6 @@ Material:
     m_Ints: []
     m_Floats:
     - <noninit>: 0
-    - _Dt: 0.0039297
+    - _Dt: 0.0330824
     m_Colors: []
   m_BuildTextureStacks: []
