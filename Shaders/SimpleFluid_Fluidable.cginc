@@ -17,6 +17,14 @@ float4 fluidOutMultiplier(float4 picture, float fluidity) {
 float4 fluidOutMultiplier(float4 picture) {
     return fluidOutMultiplier(picture, 1.0);
 }
+float4 fluidable(float4 color, float4 source) {
+#if defined(FLUIDABLE_OUTPUT_SOURCE)
+    return fluidOutMultiplier(source);
+#else
+    return color;
+#endif
+}
+
 void fluidOutMultiplier_float(float4 cin, out float4 cout) {
     cout = fluidOutMultiplier(cin, 1.0);
 }
